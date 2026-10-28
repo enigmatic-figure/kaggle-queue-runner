@@ -17,6 +17,8 @@ The default workload is an 8,192-member real-coordinate geometry trial. It check
 
 ## Workload list
 
+For selectable model sets, parallel embedding instances, finite profiling backlogs and a session-budget policy, see [Catalog and session policy](docs/catalog-and-session-policy.md). Qwen3-Coder-30B is the preferred agent candidate; model choice remains separate from the worker. The catalog is prepared but inactive for the current queued run.
+
 ```json
 {
   "version": 1,

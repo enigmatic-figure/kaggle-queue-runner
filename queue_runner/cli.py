@@ -27,12 +27,14 @@ def worker(args):
     from .control import start
     from .network import Tailnet
     from .notifications import send
+    worker_started=time.monotonic()
     run_id=args.run_id or 'kaggle-'+time.strftime('%Y%m%dT%H%M%SZ',time.gmtime())+'-'+uuid.uuid4().hex[:8]
     root=Path(args.root).resolve()/run_id
     if root.exists() and not args.resume:raise ValueError('Run directory exists; choose a new run ID or explicit --resume')
     names=['TS_AUTHKEY','QUEUE_CONTROL_TOKEN','QUEUE_NOTIFY_TOKEN','QUEUE_NOTIFY_URL','HF_TOKEN']
     private={name:value for name in names if (value:=get_secret(name))}
     r=Runner(root,secrets=private);source=GitSource(args.repo,args.branch,root/'.source')
+    r.context_env={'QUEUE_CONTROL_URL':'http://127.0.0.1:'+str(args.port)}
     commit,manifest=source.refresh()
     put(root/'source.json',{'repository':args.repo,'branch':args.branch,'initial_commit':commit,'worker_id':run_id})
     network=None;server=None;publisher=None;publisher_thread=None;stop_sync=threading.Event();notification_threads=[]
@@ -87,10 +89,10 @@ def worker(args):
                             except Exception as error:put(root/'artifact-sync.json',{'ok':False,'error_type':type(error).__name__,'unix_time':time.time()})
                             return
                 publisher_thread=threading.Thread(target=sync_loop,daemon=True);publisher_thread.start()
-        from .services import Manager
-        r.services=Manager(root,network=network,secrets=private,event=r.event)
+        from .services import Pool
+        r.services=Pool(root,network=network,secrets=private,event=r.event)
         r.event('ready',worker_id=run_id,private_control=bool(network))
-        return run_queue(source,r,max_seconds=args.hours*3600,idle_seconds=args.idle_minutes*60,
+        return run_queue(source,r,max_seconds=max(.01,args.hours*3600-(time.monotonic()-worker_started)),idle_seconds=args.idle_minutes*60,
                          poll_seconds=args.poll_seconds,secret_provider=get_secret)
     finally:
         if r.services:r.services.close()

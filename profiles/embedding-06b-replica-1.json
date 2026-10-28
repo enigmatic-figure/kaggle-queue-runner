@@ -1,0 +1,20 @@
+{
+  "model": "Qwen/Qwen3-Embedding-0.6B",
+  "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+  "backend": "vllm_jax",
+  "runner": "pooling",
+  "dtype": "bfloat16",
+  "numa_node": 0,
+  "chips": [
+    1
+  ],
+  "cpu_threads": 4,
+  "cpu_offset": 4,
+  "port": 8002,
+  "max_model_len": 4096,
+  "max_num_seqs": 8,
+  "memory_utilization": 0.7,
+  "startup_seconds": 1800,
+  "max_seconds": 36000,
+  "min_remaining_seconds": 1800
+}

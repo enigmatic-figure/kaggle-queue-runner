@@ -2,14 +2,19 @@
 from pathlib import Path
 import argparse,json,os,re,signal,subprocess,sys,time,urllib.request,shutil,hashlib
 from .io import put,Redactor
+from .resources import chip_bounds
 
 def validate_profile(p):
     if not isinstance(p,dict) or not isinstance(p.get('model'),str) or not p['model']:raise ValueError('Model ID required')
     if not re.fullmatch('[a-f0-9]{40}',p.get('revision','')):raise ValueError('Pin an immutable Hugging Face model revision')
-    if p.get('chips') not in [[0,1,2,3],[4,5,6,7]]:raise ValueError('Four-chip 2x2 partition required')
+    chip_bounds(p.get('chips'))
+    if p.get('deployment_blocked_reason'):raise ValueError(p['deployment_blocked_reason'])
+    if p.get('backend','vllm_jax')!='vllm_jax':raise ValueError('No adapter installed for selected inference backend')
+    if p.get('runner','generate') not in ['generate','pooling']:raise ValueError('Unknown model runner')
+    if p.get('dtype','bfloat16') not in ['auto','bfloat16','float16','float32']:raise ValueError('Unknown model dtype')
     for name,default,low,high in [('numa_node',None,0,1024),('cpu_threads',8,1,224),('port',8000,1024,65535),
         ('max_model_len',4096,128,131072),('max_num_seqs',4,1,128),('startup_seconds',1800,1,7200),
-        ('max_seconds',7200,1,28800),('min_remaining_seconds',1800,0,28800)]:
+        ('max_seconds',7200,1,86400),('min_remaining_seconds',1800,0,86400),('cpu_offset',0,0,223)]:
         value=p.get(name,default)
         if type(value)!=int or not low<=value<=high:raise ValueError('Invalid '+name)
     utilization=p.get('memory_utilization',.75)
@@ -19,18 +24,31 @@ def validate_profile(p):
 
 
 def server_command(python,profile,cache):
-    return [str(python),'-m','vllm.entrypoints.cli.main','serve',profile['model'],
+    command=[str(python),'-m','vllm.entrypoints.cli.main','serve',profile['model'],
         '--revision',profile['revision'],'--host','127.0.0.1','--port',str(profile.get('port',8000)),
-        '--dtype','bfloat16','--tensor-parallel-size','4',
+        '--dtype',profile.get('dtype','bfloat16'),'--tensor-parallel-size',str(len(profile['chips'])),
         '--max-model-len',str(profile.get('max_model_len',4096)),
         '--max-num-seqs',str(profile.get('max_num_seqs',4)),
         '--gpu-memory-utilization',str(profile.get('memory_utilization',.75)),
         '--download-dir',str(cache/'models')]
+    if profile.get('runner')=='pooling':command+=['--runner','pooling']
+    if profile.get('quantization'):command+=['--quantization',profile['quantization']]
+    if profile.get('tool_call_parser'):command+=['--tool-call-parser',profile['tool_call_parser'],'--enable-auto-tool-choice']
+    return command
 
 
 def ensure_environment(cache,state):
     if sys.version_info[:2]!=(3,12) or sys.platform!='linux':raise RuntimeError('Pinned vLLM wheel requires Linux CPython 3.12')
     cache=Path(cache);cache.mkdir(parents=True,exist_ok=True)
+    Path(state).parent.mkdir(parents=True,exist_ok=True)
+    import fcntl
+    put(state,{'phase':'waiting_environment'})
+    with (cache/'environment-install.lock').open('a') as guard:
+        fcntl.flock(guard,fcntl.LOCK_EX)
+        return _ensure_environment(cache,state)
+
+
+def _ensure_environment(cache,state):
     if shutil.disk_usage(cache).free<32*1024**3:raise RuntimeError('At least 32 GiB free staging space required for this profile')
     lock=Path(__file__).resolve().parents[1]/'environments/vllm-tpu-py312.lock'
     digest=hashlib.sha256(lock.read_bytes()).hexdigest()
@@ -58,10 +76,12 @@ def run(profile,state,cache):
         stopping=True
     signal.signal(signal.SIGTERM,stop);signal.signal(signal.SIGINT,stop)
     try:
+        Path(cache).mkdir(parents=True,exist_ok=True)
+        if shutil.disk_usage(cache).free<profile.get('min_free_disk_gib',32)*1024**3:raise RuntimeError('Insufficient staging space for selected model profile')
         python=ensure_environment(Path(cache),state)
         if stopping:return
         # This short-lived child closes its TPU client before the serving child starts.
-        probe="import jax,json; d=jax.devices(); assert len(d)==4 and all(v.platform=='tpu' for v in d), str(d); print(json.dumps({'jax':jax.__version__,'devices':[str(v) for v in d]}))"
+        probe="import jax,json; d=jax.devices(); assert len(d)=="+str(len(profile['chips']))+" and all(v.platform=='tpu' for v in d), str(d); print(json.dumps({'jax':jax.__version__,'devices':[str(v) for v in d]}))"
         put(state,{'phase':'device_check'})
         output=subprocess.check_output([str(python),'-c',probe],text=True,timeout=180)
         (state.parent/'devices.txt').write_text(output)

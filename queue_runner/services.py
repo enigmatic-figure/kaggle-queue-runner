@@ -72,10 +72,10 @@ class Manager:
                 partition=resources.service_plan(profile,self.topology,primary)
                 if os.name!='posix':raise ValueError('Resident TPU services require Linux')
                 if not self.secrets.get('QUEUE_CONTROL_TOKEN'):raise ValueError('Queue control token required for inference API')
+                if self.process is not None and self.current_key==key:return primary
                 if remaining<profile.get('min_remaining_seconds',1800):raise ValueError('Insufficient remaining time for model service')
             except (OSError,ValueError,TypeError,KeyError) as error:
                 self._stop('resource_conflict');self.record={'phase':'deferred','reason':str(error),'id':spec['id']};return primary
-            if self.process is not None and self.current_key==key:return primary
             self._stop('profile_changed')
             if key in self.finished:
                 code=self.finished[key]
@@ -99,6 +99,8 @@ class Manager:
             self.process=subprocess.Popen(wrapped,cwd=snapshot,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,start_new_session=True,bufsize=0)
             self.current_key=key;self.last_phase=None
             self.record={'id':spec['id'],'phase':'starting','pid':self.process.pid,'source_commit':commit,
+                'model':profile['model'],'revision':profile['revision'],'runner':profile.get('runner','generate'),
+                'local_api_url':'http://127.0.0.1:'+str(profile.get('port',8000))+'/v1',
                 'profile_sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'cpus':partition['cpus'],'chips':partition['chips']}
             if self.network:
                 try:
@@ -125,3 +127,59 @@ class Manager:
     def close(self):
         self.shutdown.set();self.monitor.join(timeout=1)
         with self.lock:self._stop('runner_shutdown')
+
+
+class Pool:
+    """Validate a whole deployment set before starting disjoint model processes."""
+    def __init__(self,root,*,topology=None,secrets=None,network=None,event=None,manager_factory=Manager):
+        self.root=Path(root);self.topology=topology if topology is not None else resources.discover()
+        self.secrets=secrets or {};self.network=network;self.event=event
+        self.factory=manager_factory;self.children={};self.identity=None;self.record={'phase':'disabled'}
+        self.lock=threading.RLock();self.finished={}
+
+    def status(self):
+        with self.lock:return self._status()
+
+    def _status(self):
+        statuses={name:child.status() for name,child in self.children.items()}
+        phase=self.record.get('phase','disabled')
+        if statuses:
+            phases=[s['phase'] for s in statuses.values()]
+            phase='ready' if all(p=='ready' for p in phases) else next((p for p in phases if p!='ready'),'starting')
+        return {**self.record,'phase':phase,'services':statuses}
+
+    def before_job(self,manifest,job,snapshot,commit,remaining):
+        with self.lock:return self._before_job(manifest,job,snapshot,commit,remaining)
+
+    def _before_job(self,manifest,job,snapshot,commit,remaining):
+        primary=resources.job_plan(job,self.topology);selected=[s for s in manifest.get('services',[]) if s.get('enabled',False)]
+        snapshot=Path(snapshot).resolve();profiles=[];used_chips=set();used_cpus=set();ports=set();runtime_ports=set()
+        try:
+            for spec in selected:
+                path=(snapshot/spec['profile']).resolve()
+                if not path.is_relative_to(snapshot):raise ValueError('Service profile outside snapshot')
+                profile=validate_profile(json.loads(path.read_text()));plan=resources.service_plan(profile,self.topology,primary)
+                port=profile.get('port',8000);runtime_port=plan['environment']['TPU_PROCESS_PORT']
+                if set(plan['chips'])&used_chips or set(plan['cpus'])&used_cpus:raise ValueError('Deployment set has CPU/chip overlap')
+                if port in ports or runtime_port in runtime_ports:raise ValueError('Deployment set has API/runtime port overlap')
+                used_chips.update(plan['chips']);used_cpus.update(plan['cpus']);ports.add(port);runtime_ports.add(runtime_port)
+                profiles.append((spec,hashlib.sha256(path.read_bytes()).hexdigest()))
+        except (OSError,ValueError,TypeError,KeyError) as error:
+            self.close();self.record={'phase':'deferred','reason':str(error)};return primary
+        identity=hashlib.sha256(json.dumps(profiles,sort_keys=True).encode()).hexdigest()
+        if identity!=self.identity:
+            self.close();self.identity=identity
+        for spec,_ in profiles:
+            if spec['id'] not in self.children:
+                self.children[spec['id']]=self.factory(self.root/'resident'/spec['id'],topology=self.topology,
+                    secrets=self.secrets,network=self.network,event=self.event)
+                self.children[spec['id']].finished.update(self.finished.get(spec['id'],{}))
+            self.children[spec['id']].before_job({**manifest,'services':[spec]},job,snapshot,commit,remaining)
+        self.record={'phase':'starting' if profiles else 'disabled'}
+        return primary
+
+    def close(self):
+        with self.lock:
+            for name,child in self.children.items():
+                child.close();self.finished.setdefault(name,{}).update(child.finished)
+            self.children={};self.identity=None;self.record={'phase':'stopped'}

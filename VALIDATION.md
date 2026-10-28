@@ -38,3 +38,11 @@ The new resident service remains disabled in workloads.json. The complete suite 
 The exact Linux CPython 3.12 inference dependency set resolved with CPU PyTorch: vllm-tpu 0.32.0, tpu-inference 0.32.0, JAX/JAXlib 0.11.2 and libtpu 0.0.48. All 240 selected packages and archive hashes are captured in environments/vllm-tpu-py312.lock. The CPU environment installed and passed actual DuckDB/Arrow statistics and a small CMA-ES smoke run.
 
 Kaggle NUMA/chip discovery, simultaneous four-chip serving, actual generation and private inference API delivery await hardware execution. No notebook version was submitted for this extension.
+
+## Selectable catalogs and session policy
+
+The catalog pins nine model entries and nine deployment sets. Eight profiling jobs are prepared, but catalog/selection.json selects none. The queued version is unchanged. The 397B entry is explicitly blocked from resident deployment and excluded from the profiling backlog.
+
+Local tests cover parallel lightweight service processes with disjoint CPU/chip assignments, whole-set conflicts and handoffs, serialized shared environment setup, one/four/eight-chip planner configurations, catalog materialization, per-job set selection, primary API sessions during idle periods, session reserves, redacted API/tool traces, and a real HTTP profiling-workload smoke test. The HTTP/server substitutes do not establish TPU model compatibility. The future payload preparation utility produces a reviewable notebook and selection without submitting it.
+
+Fresh results for this extension: 40 Linux tests passed; Windows passed 33 with seven Linux/Python-3.12 integration tests skipped. The two-job CLI smoke passed. A prepared nine-hour example payload compiled, resolved the Coder selection and eight profiling jobs, and was not submitted. The supplied private callback URL matched the local configuration and passed an authenticated controller self-test.

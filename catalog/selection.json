@@ -1,0 +1,6 @@
+{
+  "active_set": null,
+  "backlogs": [],
+  "idle_mode": "drain",
+  "checkpoint_reserve_seconds": 300
+}

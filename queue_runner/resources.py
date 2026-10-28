@@ -38,6 +38,7 @@ def validate_resources(value):
         raise ValueError('tpu_chips must be all or unique physical chip IDs 0..7')
     if 'numa_node' in value and (type(value['numa_node'])!=int or value['numa_node']<0):raise ValueError('Invalid NUMA node')
     if 'cpu_threads' in value and (type(value['cpu_threads'])!=int or value['cpu_threads']<1):raise ValueError('Positive CPU thread count required')
+    if 'cpu_offset' in value and (type(value['cpu_offset'])!=int or value['cpu_offset']<0):raise ValueError('Nonnegative CPU offset required')
 
 
 def _cpu_plan(spec,topology):
@@ -47,7 +48,9 @@ def _cpu_plan(spec,topology):
         if not cpus:raise ValueError('Selected NUMA node has no allowed CPUs')
         cpus=list(cpus)
     threads=spec.get('cpu_threads',len(cpus) if cpus else 1)
-    if cpus:cpus=cpus[:threads]
+    if cpus:
+        offset=spec.get('cpu_offset',0);cpus=cpus[offset:offset+threads]
+        if not cpus:raise ValueError('CPU offset leaves no allowed CPUs')
     env={name:str(min(threads,len(cpus)) if cpus else threads)
          for name in ['OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','MKL_NUM_THREADS','NUMEXPR_NUM_THREADS']}
     if cpus:env['QUEUE_CPUSET']=','.join(map(str,cpus))
@@ -62,20 +65,31 @@ def job_plan(job,topology):
     cpus,env=_cpu_plan(spec,topology)
     if not chips:env.update(JAX_PLATFORMS='cpu',PJRT_DEVICE='CPU',TPU_VISIBLE_CHIPS='',CUDA_VISIBLE_DEVICES='')
     elif len(chips)!=8:
-        if chips not in [[0,1,2,3],[4,5,6,7]]:raise ValueError('Partial TPU jobs currently require one contiguous 2x2 partition')
-        env.update(TPU_VISIBLE_CHIPS=','.join(map(str,chips)),TPU_CHIPS_PER_PROCESS_BOUNDS='2,2,1',TPU_PROCESS_BOUNDS='1,1,1')
+        bounds=chip_bounds(chips)
+        env.update(TPU_VISIBLE_CHIPS=','.join(map(str,chips)),TPU_CHIPS_PER_PROCESS_BOUNDS=bounds,TPU_PROCESS_BOUNDS='1,1,1')
     return {'chips':chips,'cpus':cpus,'environment':env}
 
 
 def service_plan(profile,topology,primary):
     chips=profile['chips'];node=profile['numa_node']
     if not topology['chips']:raise ValueError('TPU chip-to-NUMA mapping is unavailable; service deferred')
-    if chips not in [[0,1,2,3],[4,5,6,7]]:raise ValueError('Service requires a contiguous four-chip v5e partition')
-    if any(topology['chips'].get(i)!=node for i in chips):raise ValueError('Requested chips do not match observed NUMA mapping')
+    bounds=chip_bounds(chips)
+    if any(i not in topology['chips'] for i in chips):raise ValueError('Requested chips are absent from observed mapping')
+    if len(chips)!=8 and any(topology['chips'].get(i)!=node for i in chips):raise ValueError('Requested chips do not match observed NUMA mapping')
     if set(chips)&set(primary['chips']):raise ValueError('TPU chip overlap with primary workload')
     cpus,env=_cpu_plan(profile,topology)
     if primary['cpus'] is None or set(cpus)&set(primary['cpus']):raise ValueError('Primary must reserve disjoint CPU affinity before service can start')
-    env.update(TPU_VISIBLE_CHIPS=','.join(map(str,chips)),TPU_CHIPS_PER_PROCESS_BOUNDS='2,2,1',
-        TPU_PROCESS_BOUNDS='1,1,1',JAX_PLATFORMS='tpu',PJRT_DEVICE='TPU',TPU_PROCESS_PORT='8477',
-        TPU_PROCESS_ADDRESSES='localhost:8477',CLOUD_TPU_TASK_ID='0',JAX_PROCESS_ID='0',JAX_NUM_PROCESSES='1')
+    port=profile.get('tpu_process_port',8477+profile.get('port',8000)-8000)
+    env.update(TPU_VISIBLE_CHIPS=','.join(map(str,chips)),TPU_CHIPS_PER_PROCESS_BOUNDS=bounds,
+        TPU_PROCESS_BOUNDS='1,1,1',JAX_PLATFORMS='tpu',PJRT_DEVICE='TPU',TPU_PROCESS_PORT=str(port),
+        TPU_PROCESS_ADDRESSES='localhost:'+str(port),CLOUD_TPU_TASK_ID='0',JAX_PROCESS_ID='0',JAX_NUM_PROCESSES='1')
     return {'chips':chips,'cpus':cpus,'environment':env}
+
+
+def chip_bounds(chips):
+    if not isinstance(chips,list):raise ValueError('Chip selection must be a list')
+    if any(type(i)!=int for i in chips):raise ValueError('Physical chip IDs must be integers')
+    if len(chips)==1 and type(chips[0])==int and 0<=chips[0]<8:return '1,1,1'
+    if chips in [[0,1,2,3],[4,5,6,7]]:return '2,2,1'
+    if chips==list(range(8)):return '2,4,1'
+    raise ValueError('Use a supported one-, four-, or eight-chip v5e partition')

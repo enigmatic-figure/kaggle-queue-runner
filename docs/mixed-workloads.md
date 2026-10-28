@@ -1,6 +1,6 @@
 # CPU analytics alongside resident TPU inference
 
-The queue worker can keep one vLLM service resident across compatible primary jobs. Primary jobs still run sequentially. The model is a separate process group, virtual environment, cache, and device partition. It can serve local data-generation code or authenticated callers on the tailnet.
+The queue worker can keep a deployment set of vLLM services resident across compatible primary jobs. Primary jobs still run sequentially. Each model uses a separate process group and device partition. Compatible models share a hash-locked environment under a serialized installer lock. They can serve local data-generation code or authenticated callers on the tailnet. See [catalog and session policy](catalog-and-session-policy.md) for selectable models, parallel embedding replicas and primary API sessions.
 
 The existing queued notebook does not need a new version. It clones this repository after allocation. No second Kaggle submission or reservation is involved.
 

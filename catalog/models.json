@@ -1,0 +1,187 @@
+{
+  "version": 1,
+  "default_agent_model": "qwen3-coder-30b",
+  "models": {
+    "qwen3-coder-30b": {
+      "id": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "revision": "b2cff646eb4bb1d68355c01b18ae02e7cf42d120",
+      "gated": false,
+      "safetensors": {
+        "parameters": {
+          "BF16": 30532122624
+        },
+        "total": 30532122624
+      },
+      "architectures": [
+        "Qwen3MoeForCausalLM"
+      ],
+      "model_type": "qwen3_moe",
+      "parameters_reported": 30532122624,
+      "bf16_logical_bytes_estimate": 61064245248,
+      "local_tpu_validation": "not_run",
+      "support_source": "https://docs.vllm.ai/projects/tpu/en/v0.32.0/recommended_models/",
+      "roles": [
+        "agent",
+        "teacher",
+        "generation"
+      ]
+    },
+    "qwen3-embedding-06b": {
+      "id": "Qwen/Qwen3-Embedding-0.6B",
+      "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+      "gated": false,
+      "safetensors": {
+        "parameters": {
+          "BF16": 595776512
+        },
+        "total": 595776512
+      },
+      "architectures": [
+        "Qwen3ForCausalLM"
+      ],
+      "model_type": "qwen3",
+      "parameters_reported": 595776512,
+      "bf16_logical_bytes_estimate": 1191553024,
+      "local_tpu_validation": "not_run",
+      "support_source": "https://docs.vllm.ai/projects/tpu/en/v0.32.0/recommended_models/"
+    },
+    "qwen3-embedding-4b": {
+      "id": "Qwen/Qwen3-Embedding-4B",
+      "revision": "5cf2132abc99cad020ac570b19d031efec650f2b",
+      "gated": false,
+      "safetensors": {
+        "parameters": {
+          "BF16": 4021774336
+        },
+        "total": 4021774336
+      },
+      "architectures": [
+        "Qwen3ForCausalLM"
+      ],
+      "model_type": "qwen3",
+      "parameters_reported": 4021774336,
+      "bf16_logical_bytes_estimate": 8043548672,
+      "local_tpu_validation": "not_run",
+      "support_source": "https://docs.vllm.ai/projects/tpu/en/v0.32.0/recommended_models/"
+    },
+    "qwen3-embedding-8b": {
+      "id": "Qwen/Qwen3-Embedding-8B",
+      "revision": "1d8ad4ca9b3dd8059ad90a75d4983776a23d44af",
+      "gated": false,
+      "safetensors": {
+        "parameters": {
+          "BF16": 7567295488
+        },
+        "total": 7567295488
+      },
+      "architectures": [
+        "Qwen3ForCausalLM"
+      ],
+      "model_type": "qwen3",
+      "parameters_reported": 7567295488,
+      "bf16_logical_bytes_estimate": 15134590976,
+      "local_tpu_validation": "not_run",
+      "support_source": "https://docs.vllm.ai/projects/tpu/en/v0.32.0/recommended_models/"
+    },
+    "gpt-oss-20b": {
+      "id": "openai/gpt-oss-20b",
+      "revision": "6cee5e81ee83917806bbde320786a8fb61efebee",
+      "gated": false,
+      "safetensors": {
+        "parameters": {
+          "BF16": 1804459584,
+          "U8": 19110297600
+        },
+        "total": 20914757184
+      },
+      "architectures": [
+        "GptOssForCausalLM"
+      ],
+      "model_type": "gpt_oss",
+      "parameters_reported": 20914757184,
+      "bf16_logical_bytes_estimate": 41829514368,
+      "local_tpu_validation": "not_run",
+      "support_source": "https://docs.vllm.ai/projects/tpu/en/v0.32.0/recommended_models/"
+    },
+    "gemma4-moe": {
+      "id": "google/gemma-4-26B-A4B-it",
+      "revision": "4d7ae4984b7db7de8f8457170b3f1a419ee76d52",
+      "gated": false,
+      "safetensors": {
+        "parameters": {
+          "BF16": 25805936206
+        },
+        "total": 25805936206
+      },
+      "architectures": [
+        "Gemma4ForConditionalGeneration"
+      ],
+      "model_type": "gemma4",
+      "parameters_reported": 25805936206,
+      "bf16_logical_bytes_estimate": 51611872412,
+      "local_tpu_validation": "not_run",
+      "support_source": "https://docs.vllm.ai/projects/tpu/en/v0.32.0/recommended_models/"
+    },
+    "gemma4-dense": {
+      "id": "google/gemma-4-31B-it",
+      "revision": "842da3794eaa0b77d5f08bae87a17459d91ff475",
+      "gated": false,
+      "safetensors": {
+        "parameters": {
+          "BF16": 31273088876
+        },
+        "total": 31273088876
+      },
+      "architectures": [
+        "Gemma4ForConditionalGeneration"
+      ],
+      "model_type": "gemma4",
+      "parameters_reported": 31273088876,
+      "bf16_logical_bytes_estimate": 62546177752,
+      "local_tpu_validation": "not_run",
+      "support_source": "https://docs.vllm.ai/projects/tpu/en/v0.32.0/recommended_models/"
+    },
+    "qwen35-9b": {
+      "id": "Qwen/Qwen3.5-9B",
+      "revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+      "gated": false,
+      "safetensors": {
+        "parameters": {
+          "BF16": 9653100528,
+          "F32": 3840
+        },
+        "total": 9653104368
+      },
+      "architectures": [
+        "Qwen3_5ForConditionalGeneration"
+      ],
+      "model_type": "qwen3_5",
+      "parameters_reported": 9653104368,
+      "bf16_logical_bytes_estimate": 19306208736,
+      "local_tpu_validation": "not_run",
+      "support_source": "https://docs.vllm.ai/projects/tpu/en/v0.32.0/recommended_models/"
+    },
+    "qwen35-397b": {
+      "id": "Qwen/Qwen3.5-397B-A17B",
+      "revision": "8472618112abcbd45acbcdc58436aff4233c23f7",
+      "gated": false,
+      "safetensors": {
+        "parameters": {
+          "BF16": 403397920304,
+          "F32": 8640
+        },
+        "total": 403397928944
+      },
+      "architectures": [
+        "Qwen3_5MoeForConditionalGeneration"
+      ],
+      "model_type": "qwen3_5_moe",
+      "parameters_reported": 403397928944,
+      "bf16_logical_bytes_estimate": 806795857888,
+      "local_tpu_validation": "not_run",
+      "support_source": "https://docs.vllm.ai/projects/tpu/en/v0.32.0/recommended_models/",
+      "four_bit_weight_bytes_lower_bound": 201698964472.0,
+      "deployment_note": "Offload research only. Active parameters do not determine resident weight storage. No validated four-chip deployment."
+    }
+  }
+}

@@ -2,6 +2,7 @@
 from pathlib import Path
 import subprocess,json,re
 from .contracts import validate
+from .catalog import resolve,safe_json_path
 
 
 class GitSource:
@@ -18,7 +19,8 @@ class GitSource:
     def refresh(self):
         self._git('fetch','--quiet','--depth','1','origin',self.branch)
         commit=self._git('rev-parse','FETCH_HEAD')
-        manifest=validate(json.loads(self._git('show',commit+':workloads.json')))
+        read=lambda path:json.loads(self._git('show',commit+':'+safe_json_path(path)))
+        manifest=validate(resolve(read('workloads.json'),read))
         return commit,manifest
 
     def snapshot(self,commit,destination):

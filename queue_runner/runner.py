@@ -28,6 +28,7 @@ class Runner:
         self.stop=threading.Event();self.reload=threading.Event();self.current=None
         self.lock=threading.RLock();self.process=None;self.listeners=[]
         self.services=None
+        self.context_env={}
 
     def status(self):
         with self.lock:value={'current':self.current,'paused':self.pause.is_set(),'stop_requested':self.stop.is_set()}
@@ -49,8 +50,9 @@ class Runner:
         return json.loads(p.read_text()) if p.exists() else None
 
     def run_one(self,job,snapshot,commit,remaining=None):
-        # Validate the individual job without requiring dependency definitions here.
-        validate({'version':1,'jobs':[{**job,'depends_on':[]}]})
+        # Dependency and deployment references were checked in the whole manifest.
+        individual={**job,'depends_on':[]};individual.pop('service_set',None)
+        validate({'version':1,'jobs':[individual]})
         digest=fingerprint(job);identity=job['id'];folder=self.root/'jobs'/identity
         old=self.receipt(identity)
         if old:
@@ -76,6 +78,7 @@ class Runner:
         environment={k:v for k,v in os.environ.items() if k not in self.secrets}
         environment.update({name:self.secrets[name] for name in job.get('secrets',[])})
         environment.update(plan['environment'])
+        environment.update(self.context_env)
         environment.update({'QUEUE_OUTPUT_DIR':str(output),'QUEUE_JOB_ID':identity,'QUEUE_SOURCE_COMMIT':commit,
             'QUEUE_SHARED_DIR':str(self.root/'shared'),'QUEUE_CHECKPOINT_REQUEST':str(folder/'checkpoint-request.json'),
             'PYTHONUNBUFFERED':'1','PYTHONPATH':str(snapshot)+os.pathsep+environment.get('PYTHONPATH','')})

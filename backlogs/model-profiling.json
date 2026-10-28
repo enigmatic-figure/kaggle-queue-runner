@@ -1,0 +1,134 @@
+{
+  "version": 1,
+  "purpose": "Finite startup and request profiling, no model quality claim",
+  "jobs": [
+    {
+      "id": "profile-dual-embedding-v1",
+      "script": "workloads/profile_services.py",
+      "service_set": "dual-embedding",
+      "resources": {
+        "tpu_chips": [],
+        "numa_node": 1,
+        "cpu_threads": 1
+      },
+      "secrets": [
+        "QUEUE_CONTROL_TOKEN"
+      ],
+      "timeout_seconds": 3600,
+      "min_remaining_seconds": 1800,
+      "on_failure": "continue"
+    },
+    {
+      "id": "profile-qwen3-embedding-4b-v1",
+      "script": "workloads/profile_services.py",
+      "service_set": "qwen3-embedding-4b",
+      "resources": {
+        "tpu_chips": [],
+        "numa_node": 1,
+        "cpu_threads": 1
+      },
+      "secrets": [
+        "QUEUE_CONTROL_TOKEN"
+      ],
+      "timeout_seconds": 3600,
+      "min_remaining_seconds": 1800,
+      "on_failure": "continue"
+    },
+    {
+      "id": "profile-qwen3-embedding-8b-v1",
+      "script": "workloads/profile_services.py",
+      "service_set": "qwen3-embedding-8b",
+      "resources": {
+        "tpu_chips": [],
+        "numa_node": 1,
+        "cpu_threads": 1
+      },
+      "secrets": [
+        "QUEUE_CONTROL_TOKEN"
+      ],
+      "timeout_seconds": 3600,
+      "min_remaining_seconds": 1800,
+      "on_failure": "continue"
+    },
+    {
+      "id": "profile-qwen35-9b-v1",
+      "script": "workloads/profile_services.py",
+      "service_set": "qwen35-9b",
+      "resources": {
+        "tpu_chips": [],
+        "numa_node": 1,
+        "cpu_threads": 1
+      },
+      "secrets": [
+        "QUEUE_CONTROL_TOKEN"
+      ],
+      "timeout_seconds": 3600,
+      "min_remaining_seconds": 1800,
+      "on_failure": "continue"
+    },
+    {
+      "id": "profile-gpt-oss-20b-v1",
+      "script": "workloads/profile_services.py",
+      "service_set": "gpt-oss-20b",
+      "resources": {
+        "tpu_chips": [],
+        "numa_node": 1,
+        "cpu_threads": 1
+      },
+      "secrets": [
+        "QUEUE_CONTROL_TOKEN"
+      ],
+      "timeout_seconds": 3600,
+      "min_remaining_seconds": 1800,
+      "on_failure": "continue"
+    },
+    {
+      "id": "profile-gemma4-moe-v1",
+      "script": "workloads/profile_services.py",
+      "service_set": "gemma4-moe",
+      "resources": {
+        "tpu_chips": [],
+        "numa_node": 1,
+        "cpu_threads": 1
+      },
+      "secrets": [
+        "QUEUE_CONTROL_TOKEN"
+      ],
+      "timeout_seconds": 3600,
+      "min_remaining_seconds": 1800,
+      "on_failure": "continue"
+    },
+    {
+      "id": "profile-gemma4-dense-v1",
+      "script": "workloads/profile_services.py",
+      "service_set": "gemma4-dense",
+      "resources": {
+        "tpu_chips": [],
+        "numa_node": 1,
+        "cpu_threads": 1
+      },
+      "secrets": [
+        "QUEUE_CONTROL_TOKEN"
+      ],
+      "timeout_seconds": 3600,
+      "min_remaining_seconds": 1800,
+      "on_failure": "continue"
+    },
+    {
+      "id": "profile-qwen3-coder-30b-v1",
+      "script": "workloads/profile_services.py",
+      "service_set": "qwen3-coder-30b",
+      "resources": {
+        "tpu_chips": [],
+        "numa_node": 1,
+        "cpu_threads": 1
+      },
+      "secrets": [
+        "QUEUE_CONTROL_TOKEN"
+      ],
+      "timeout_seconds": 3600,
+      "min_remaining_seconds": 1800,
+      "on_failure": "continue"
+    }
+  ]
+}

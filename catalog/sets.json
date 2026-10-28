@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "default_agent_set": "qwen3-coder-30b",
+  "sets": {
+    "qwen3-coder-30b": {
+      "description": "Qwen/Qwen3-Coder-30B-A3B-Instruct; local TPU validation pending",
+      "services": [
+        {
+          "id": "qwen3-coder-30b-v1",
+          "profile": "profiles/qwen3-coder-30b.json",
+          "enabled": true
+        }
+      ]
+    },
+    "qwen3-embedding-4b": {
+      "description": "Qwen/Qwen3-Embedding-4B; local TPU validation pending",
+      "services": [
+        {
+          "id": "qwen3-embedding-4b-v1",
+          "profile": "profiles/qwen3-embedding-4b.json",
+          "enabled": true
+        }
+      ]
+    },
+    "qwen3-embedding-8b": {
+      "description": "Qwen/Qwen3-Embedding-8B; local TPU validation pending",
+      "services": [
+        {
+          "id": "qwen3-embedding-8b-v1",
+          "profile": "profiles/qwen3-embedding-8b.json",
+          "enabled": true
+        }
+      ]
+    },
+    "gpt-oss-20b": {
+      "description": "openai/gpt-oss-20b; local TPU validation pending",
+      "services": [
+        {
+          "id": "gpt-oss-20b-v1",
+          "profile": "profiles/gpt-oss-20b.json",
+          "enabled": true
+        }
+      ]
+    },
+    "gemma4-moe": {
+      "description": "google/gemma-4-26B-A4B-it; local TPU validation pending",
+      "services": [
+        {
+          "id": "gemma4-moe-v1",
+          "profile": "profiles/gemma4-moe.json",
+          "enabled": true
+        }
+      ]
+    },
+    "gemma4-dense": {
+      "description": "google/gemma-4-31B-it; local TPU validation pending",
+      "services": [
+        {
+          "id": "gemma4-dense-v1",
+          "profile": "profiles/gemma4-dense.json",
+          "enabled": true
+        }
+      ]
+    },
+    "qwen35-9b": {
+      "description": "Qwen/Qwen3.5-9B; local TPU validation pending",
+      "services": [
+        {
+          "id": "qwen35-9b-v1",
+          "profile": "profiles/qwen35-9b.json",
+          "enabled": true
+        }
+      ]
+    },
+    "qwen35-397b": {
+      "description": "Qwen/Qwen3.5-397B-A17B; local TPU validation pending",
+      "services": [
+        {
+          "id": "qwen35-397b-v1",
+          "profile": "profiles/qwen35-397b.json",
+          "enabled": true
+        }
+      ]
+    },
+    "dual-embedding": {
+      "description": "Two independent 0.6B embedding instances on separate chips and CPU sets",
+      "services": [
+        {
+          "id": "embedding-0-v1",
+          "profile": "profiles/embedding-06b-replica-0.json",
+          "enabled": true
+        },
+        {
+          "id": "embedding-1-v1",
+          "profile": "profiles/embedding-06b-replica-1.json",
+          "enabled": true
+        }
+      ]
+    }
+  },
+  "backlogs": {
+    "model-profiling": "backlogs/model-profiling.json"
+  }
+}

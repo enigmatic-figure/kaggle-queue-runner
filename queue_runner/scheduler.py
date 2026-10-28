@@ -6,7 +6,7 @@ from .io import put
 
 def run_queue(source,runner,*,max_seconds=28800,idle_seconds=300,poll_seconds=30,secret_provider=None):
     if not all(math.isfinite(v) and v>0 for v in [max_seconds,idle_seconds,poll_seconds]):raise ValueError('Positive finite scheduler times required')
-    started=time.monotonic();idle_started=None;failures=0;reason='session_limit'
+    started=time.monotonic();idle_started=None;failures=0;reason='session_limit';idle_snapshot=None;idle_commit=None
     while time.monotonic()-started<max_seconds:
         if runner.stop.is_set():reason='stop_requested';break
         if runner.pause.is_set():runner.reload.wait(poll_seconds);runner.reload.clear();continue
@@ -17,6 +17,8 @@ def run_queue(source,runner,*,max_seconds=28800,idle_seconds=300,poll_seconds=30
             if failures>=5:reason='source_unavailable';break
             runner.reload.wait(poll_seconds);runner.reload.clear();continue
         ran=False;pending=[]
+        policy=manifest.get('policy',{});reserve=policy.get('checkpoint_reserve_seconds',0)
+        if max_seconds-(time.monotonic()-started)<=reserve:reason='checkpoint_reserve';break
         for job in manifest['jobs']:
             if not job.get('enabled',True):continue
             old=runner.receipt(job['id'])
@@ -33,12 +35,15 @@ def run_queue(source,runner,*,max_seconds=28800,idle_seconds=300,poll_seconds=30
                         if value:runner.secrets[name]=value
             missing=[name for name in job.get('secrets',[]) if not runner.secrets.get(name)]
             if missing:pending.append({'id':job['id'],'reason':'missing_secrets','labels':missing});continue
-            remaining=max_seconds-(time.monotonic()-started)
+            remaining=max_seconds-(time.monotonic()-started)-reserve
             if remaining<job.get('min_remaining_seconds',1):pending.append({'id':job['id'],'reason':'remaining_time'});continue
             destination=runner.root/'snapshots'/(job['id']+'-'+commit[:12]+'-'+uuid.uuid4().hex[:8])
             snapshot=source.snapshot(commit,destination)
             if runner.services:
-                runner.services.before_job(manifest,job,snapshot,commit,remaining)
+                selected=job.get('service_set')
+                effective={**manifest,'services':manifest['service_sets'][selected]} if selected else manifest
+                runner.services.before_job(effective,job,snapshot,commit,remaining)
+            remaining=max_seconds-(time.monotonic()-started)-reserve
             result=runner.run_one(job,snapshot,commit,remaining=remaining)
             ran=True;idle_started=None
             put(runner.root/'status.json',{'phase':'job_finished','commit':commit,'last_result':result,**runner.status()})
@@ -46,10 +51,15 @@ def run_queue(source,runner,*,max_seconds=28800,idle_seconds=300,poll_seconds=30
                 runner.stop.set();reason='job_failure'
             break  # Refresh the controlled repository before selecting the next job.
         if ran:continue
+        if runner.services and policy.get('serve_when_idle') and any(s.get('enabled',False) for s in manifest.get('services',[])):
+            if idle_commit!=commit:
+                idle_snapshot=source.snapshot(commit,runner.root/'snapshots'/('idle-'+commit[:12]+'-'+uuid.uuid4().hex[:8]));idle_commit=commit
+            idle_job={'resources':policy.get('idle_resources',{'tpu_chips':[],'numa_node':1,'cpu_threads':1})}
+            runner.services.before_job(manifest,idle_job,idle_snapshot,commit,max_seconds-(time.monotonic()-started)-reserve)
         if idle_started is None:idle_started=time.monotonic()
         put(runner.root/'status.json',{'phase':'waiting_for_work','commit':commit,'pending':pending,
             'idle_seconds':time.monotonic()-idle_started,**runner.status()})
-        if time.monotonic()-idle_started>=idle_seconds:reason='idle_timeout';break
-        runner.reload.wait(min(poll_seconds,max_seconds-(time.monotonic()-started)));runner.reload.clear()
+        if policy.get('idle_mode','drain')=='drain' and time.monotonic()-idle_started>=idle_seconds:reason='idle_timeout';break
+        runner.reload.wait(max(.001,min(poll_seconds,max_seconds-(time.monotonic()-started)-reserve)));runner.reload.clear()
     result={'reason':reason,'elapsed_seconds':time.monotonic()-started,**runner.status()}
     put(runner.root/'final.json',result);runner.event('runner_finished',reason=reason);return result

@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "default_model": "qwen3-coder-30b",
+  "terminal_adapter": "choose_at_session_setup",
+  "trace_format": "queue-session-jsonl-v1",
+  "publish_agent_traces": false,
+  "teacher": {
+    "enabled": false,
+    "base_url": null,
+    "model": null,
+    "api_key_secret": "TEACHER_API_KEY",
+    "escalation": "explicit_task_policy",
+    "max_requests_per_task": 2
+  },
+  "roles": [
+    "agent",
+    "teacher",
+    "annotator",
+    "embedding",
+    "api"
+  ]
+}

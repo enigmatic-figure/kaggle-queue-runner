@@ -50,3 +50,12 @@ def test_contract_rejects_invalid_resources_and_service_paths():
     for declaration in [{'tpu_chips':[1,1]},{'tpu_chips':[True]},{'tpu_chips':[],'cpu_threads':0}]:
         with pytest.raises(ValueError):validate({'version':1,'jobs':[{**job,'resources':declaration}]})
     with pytest.raises(ValueError):validate({'version':1,'jobs':[job],'services':[{'id':'llm','profile':'../bad.json'}]})
+
+
+def test_single_chip_embedding_and_full_host_model_partitions():
+    topology={'nodes':{0:list(range(8)),1:list(range(8,16))},'chips':{i:i//4 for i in range(8)}}
+    primary=resources.job_plan({'resources':{'tpu_chips':[],'numa_node':1}},topology)
+    single=resources.service_plan({'numa_node':0,'chips':[1],'cpu_threads':2,'cpu_offset':2,'port':8001},topology,primary)
+    assert single['cpus']==[2,3] and single['environment']['TPU_CHIPS_PER_PROCESS_BOUNDS']=='1,1,1'
+    whole=resources.service_plan({'numa_node':0,'chips':list(range(8)),'cpu_threads':8},topology,primary)
+    assert whole['environment']['TPU_CHIPS_PER_PROCESS_BOUNDS']=='2,4,1'

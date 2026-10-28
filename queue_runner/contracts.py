@@ -37,15 +37,28 @@ def validate(value):
         active.remove(identity);visited.add(identity)
     for identity in dependencies:visit(identity)
     services=value.get('services',[])
-    if not isinstance(services,list) or len(services)>1:raise ValueError('At most one resident inference service is currently supported')
+    if not isinstance(services,list) or len(services)>8:raise ValueError('At most eight resident service processes are supported')
+    service_ids=set()
     for service in services:
         if not isinstance(service,dict):raise ValueError('Service must be an object')
         identity=service.get('id','');profile=service.get('profile','')
         if not isinstance(identity,str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{0,95}',identity):raise ValueError('Invalid service ID')
+        if identity in service_ids:raise ValueError('Duplicate service ID')
+        service_ids.add(identity)
         if not isinstance(service.get('enabled',False),bool):raise ValueError('Service enabled must be Boolean')
         if not isinstance(profile,str):raise ValueError('Service profile must be a path')
         p=PurePosixPath(profile)
         if p.is_absolute() or '..' in p.parts or '\\' in profile or ':' in profile or p.suffix!='.json':raise ValueError('Expected relative JSON service profile')
+    if 'policy' in value:
+        from .catalog import validate_policy
+        validate_policy(value['policy'])
+    sets=value.get('service_sets',{})
+    if not isinstance(sets,dict):raise ValueError('Service sets must be an object')
+    for name,entries in sets.items():
+        if not isinstance(name,str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{0,95}',name):raise ValueError('Invalid service set name')
+        validate({'version':1,'jobs':[],'services':entries})
+    for job in value['jobs']:
+        if 'service_set' in job and job['service_set'] not in sets:raise ValueError('Unknown job service set')
     return value
 
 
