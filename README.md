@@ -83,6 +83,8 @@ Attach these Kaggle Secrets to the stable notebook once:
 | `QUEUE_NOTIFY_TOKEN` | Shared token for readiness callbacks. |
 | `HF_TOKEN` | Optional checkpoint publication. |
 
+`QUEUE_CONTROLTOKEN` is also accepted as the notebook secret label for the control token.
+
 Create control and notification tokens locally without printing their values:
 
 ```powershell

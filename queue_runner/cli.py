@@ -5,11 +5,19 @@ from .io import put,Redactor
 
 
 def get_secret(label):
-    if os.environ.get(label):return os.environ[label]
+    labels=[label]+(['QUEUE_CONTROLTOKEN'] if label=='QUEUE_CONTROL_TOKEN' else [])
+    for name in labels:
+        if os.environ.get(name):return os.environ[name]
     try:
         from kaggle_secrets import UserSecretsClient
-        return UserSecretsClient().get_secret(label)
+        client=UserSecretsClient()
     except Exception:return None
+    for name in labels:
+        try:
+            value=client.get_secret(name)
+            if value:return value
+        except Exception:pass
+    return None
 
 
 def worker(args):
