@@ -31,6 +31,10 @@ def test_resident_service_survives_cpu_jobs_and_yields_before_full_tpu_job(tmp_p
         m.before_job(manifest,{},snapshot,'b'*40,3400)
         assert m.process is None and m.status()['phase']=='deferred'
         with pytest.raises(ProcessLookupError):os.kill(pid,0)
+        m.before_job(manifest,job,snapshot,'b'*40,3300)
+        assert m.process.pid!=pid
+        launches=[json.loads(p.read_text()) for p in (tmp_path/'run/services').rglob('launch.json')]
+        assert sorted(p['source_commit'] for p in launches)==['a'*40,'b'*40]
     finally:m.close()
 
 

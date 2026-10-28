@@ -33,6 +33,7 @@ class Manager:
                 try:os.killpg(process.pid,signal.SIGKILL)
                 except ProcessLookupError:pass
             if self.log_thread:self.log_thread.join(timeout=2)
+            if self.state:put(self.state.parent/'termination.json',{'reason':reason,'exit_code':process.poll(),'unix_time':time.time()})
             self.process=None
             self.event('service_stopped',service_id=self.record.get('id'),reason=reason)
         if self.forwarded is not None:
@@ -80,7 +81,7 @@ class Manager:
                 code=self.finished[key]
                 self.record={'phase':'failed' if code else 'stopped','exit_code':code,
                     'reason':'Change service ID or profile for an explicit restart','id':spec['id']};return primary
-            folder=self.root/'services'/key;folder.mkdir(parents=True,exist_ok=True);self.state=folder/'state.json'
+            folder=self.root/'services'/key/('attempt-'+str(time.time_ns()));folder.mkdir(parents=True,exist_ok=True);self.state=folder/'state.json'
             profile={**profile,'max_seconds':min(profile.get('max_seconds',7200),max(1,int(remaining)))}
             path=folder/'profile.json';put(path,profile);put(self.state,{'phase':'starting'})
             cache=Path(tempfile.gettempdir())/'queue-model-cache'
