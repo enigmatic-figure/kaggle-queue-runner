@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kaggle-queue-runner"
+version = "0.1.0"
+description = "A stable Kaggle bootstrap with a live GitHub workload queue and private control"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+hub = ["huggingface_hub==2.3.0"]
+
+[project.scripts]
+kaggle-queue-runner = "queue_runner.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["queue_runner*"]

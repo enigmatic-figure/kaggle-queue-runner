@@ -1,0 +1,17 @@
+{
+  "source_project": "qwen3-layer-baseline",
+  "source_text_unmodified": true,
+  "line_endings": "LF",
+  "original_sha256": {
+    "constraint_tpu.py": "47c34d12a4ba944b6bee4a66bf7771ebddb973906152f11fe60adf6b6cf92ab2",
+    "constraint_blocks.py": "35fd282e8dc491405b2c23b9b2a7b96d695bbe7002f3958c0ad14d79cca332e2",
+    "constraints.py": "2825d356ab349c51aad4cd4c438b93a42795cb9f02b7b0a5ebdcc618b406831d",
+    "core.py": "86e76e90549d4346cd6d3ffc841de5c7c9cef8fa07023517da37d942dff40114"
+  },
+  "sha256": {
+    "constraint_tpu.py": "47c34d12a4ba944b6bee4a66bf7771ebddb973906152f11fe60adf6b6cf92ab2",
+    "constraint_blocks.py": "1df06e89e6f397adbecd227ae975e13fe7e9bd368c8e95684ca4941f8149cf43",
+    "constraints.py": "2825d356ab349c51aad4cd4c438b93a42795cb9f02b7b0a5ebdcc618b406831d",
+    "core.py": "86e76e90549d4346cd6d3ffc841de5c7c9cef8fa07023517da37d942dff40114"
+  }
+}

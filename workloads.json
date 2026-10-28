@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "artifact_sink": null,
+  "jobs": [
+    {
+      "id": "geometry-8192-v1",
+      "script": "workloads/geometry_trial.py",
+      "timeout_seconds": 3600,
+      "min_remaining_seconds": 1200,
+      "on_failure": "continue"
+    },
+    {
+      "id": "example-cpu-v1",
+      "script": "workloads/example_cpu.py",
+      "enabled": false,
+      "timeout_seconds": 120,
+      "on_failure": "continue"
+    }
+  ]
+}

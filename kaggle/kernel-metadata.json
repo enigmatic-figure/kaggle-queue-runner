@@ -1,0 +1,16 @@
+{
+  "id": "finnbogiabrahamson/kaggle-queue-runner",
+  "title": "Kaggle Queue Runner",
+  "code_file": "queue_runner.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": false,
+  "enable_tpu": true,
+  "enable_internet": true,
+  "machine_shape": "TpuV5E8",
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}
