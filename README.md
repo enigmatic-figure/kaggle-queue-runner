@@ -6,7 +6,7 @@ The queued notebook contains only the repository URL, branch and runtime limits.
 
 ## Start
 
-1. Publish this repository as `enigmatic-figure/kaggle-queue-runner`.
+1. Use the public repository at https://github.com/enigmatic-figure/kaggle-queue-runner, or fork it and change the bootstrap repository URL.
 2. Edit `workloads.json` and the scripts under `workloads/`. Use a fresh job ID when changing an executed job.
 3. Import `kaggle/queue_runner.ipynb` into Kaggle, enable internet and select the desired accelerator. The supplied metadata targets a private v5e-8 notebook.
 4. Attach optional Kaggle Secrets described below, then submit the notebook once. Afterward, update GitHub to change its pending work; leave the queued notebook version alone.

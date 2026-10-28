@@ -14,14 +14,15 @@ Observed results, rather than deployment assumptions:
 | Notebook | Structure and Python code validated. Stable bootstrap fetches GitHub only after allocation. |
 | Wheel | Built successfully with pip wheel. |
 | Vendored numerical source | All four source-file SHA256 values match vendor/SOURCE.json. |
+| Public publication | Published commit `212271c6857de7f13e24f9d5f6c9723f48ea4097`; anonymous clone succeeded and its tracked tree exactly matched the local source. |
+| Published-copy verification | All 13 Linux tests passed; full CLI smoke completed two sequential jobs and two closed checkpoints; vendored hashes verified. |
 
 The original standalone pair-force check has also completed on an actual Kaggle eight-device TPU v5e allocation: force error 1.43e-8 maximum, distance error 1.05e-7 maximum against the Float64 reference. It did not execute this generic runner, its owner-force reduction, or the real-data trial, and its allocation ended. It is not an end-to-end throughput result.
 
-The generic notebook is a private saved draft at https://www.kaggle.com/code/finnbogiabrahamson/kaggle-queue-runner . Saving the draft did not request an allocation. Its public source repository must exist and its optional networking secrets must be attached before submission.
+The generic notebook is a private saved draft at https://www.kaggle.com/code/finnbogiabrahamson/kaggle-queue-runner . Saving the draft did not request an allocation. Its public source is https://github.com/enigmatic-figure/kaggle-queue-runner . Attach the networking secrets to enable private controls and callbacks before submission.
 
 Pending integration checks:
 
-- Public repository publication and an anonymous clone of the published commit.
 - Actual Kaggle execution of the generic bootstrap and geometry workload.
 - Kaggle worker enrollment into the tailnet with the supplied ephemeral key.
 - Worker-to-controller notification over that authenticated connection.
