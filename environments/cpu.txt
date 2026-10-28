@@ -1,0 +1,4 @@
+cma==4.5.0
+duckdb==2.0.0
+pyarrow==26.0.0
+numpy==2.5.4

@@ -1,6 +1,9 @@
 {
   "version": 1,
   "artifact_sink": null,
+  "services": [
+    {"id": "qwen3-8b-v1", "profile": "profiles/qwen3-8b-v5e4.json", "enabled": false}
+  ],
   "jobs": [
     {
       "id": "geometry-8192-v1",

@@ -37,6 +37,8 @@ def run_queue(source,runner,*,max_seconds=28800,idle_seconds=300,poll_seconds=30
             if remaining<job.get('min_remaining_seconds',1):pending.append({'id':job['id'],'reason':'remaining_time'});continue
             destination=runner.root/'snapshots'/(job['id']+'-'+commit[:12]+'-'+uuid.uuid4().hex[:8])
             snapshot=source.snapshot(commit,destination)
+            if runner.services:
+                runner.services.before_job(manifest,job,snapshot,commit,remaining)
             result=runner.run_one(job,snapshot,commit,remaining=remaining)
             ran=True;idle_started=None
             put(runner.root/'status.json',{'phase':'job_finished','commit':commit,'last_result':result,**runner.status()})

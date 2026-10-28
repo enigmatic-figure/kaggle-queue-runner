@@ -27,9 +27,12 @@ class Runner:
         self.secrets=secrets or {};self.pause=threading.Event();self.cancel=threading.Event()
         self.stop=threading.Event();self.reload=threading.Event();self.current=None
         self.lock=threading.RLock();self.process=None;self.listeners=[]
+        self.services=None
 
     def status(self):
-        with self.lock:return {'current':self.current,'paused':self.pause.is_set(),'stop_requested':self.stop.is_set()}
+        with self.lock:value={'current':self.current,'paused':self.pause.is_set(),'stop_requested':self.stop.is_set()}
+        if self.services:value['inference']=self.services.status()
+        return value
 
     def event(self,kind,**fields):
         record={'event':kind,'unix_time':time.time(),**fields}
@@ -62,6 +65,8 @@ class Runner:
         timeout=float(job.get('timeout_seconds',3600))
         if remaining is not None:timeout=min(timeout,remaining)
         if timeout<=0:return {'job_id':identity,'status':'deferred'}
+        from .resources import job_plan,discover
+        plan=job_plan(job,self.services.topology if self.services else discover())
         receipt={'job_id':identity,'source_commit':commit,'spec_sha256':digest,'status':'running',
             'started_unix':time.time(),'script':job['script'],'args':job.get('args',[]),
             'script_sha256':sha256(script)}
@@ -70,6 +75,7 @@ class Runner:
         self.event('job_started',job_id=identity,source_commit=commit)
         environment={k:v for k,v in os.environ.items() if k not in self.secrets}
         environment.update({name:self.secrets[name] for name in job.get('secrets',[])})
+        environment.update(plan['environment'])
         environment.update({'QUEUE_OUTPUT_DIR':str(output),'QUEUE_JOB_ID':identity,'QUEUE_SOURCE_COMMIT':commit,
             'QUEUE_SHARED_DIR':str(self.root/'shared'),'QUEUE_CHECKPOINT_REQUEST':str(folder/'checkpoint-request.json'),
             'PYTHONUNBUFFERED':'1','PYTHONPATH':str(snapshot)+os.pathsep+environment.get('PYTHONPATH','')})
@@ -78,7 +84,10 @@ class Runner:
         try:
             interpreter=os.environ.get('QUEUE_WORKLOAD_PYTHON',sys.executable)
             receipt['python']=interpreter
-            process=subprocess.Popen([interpreter,'-u',str(script),*job.get('args',[])],cwd=snapshot,
+            receipt['resources']={'chips':plan['chips'],'cpus':plan['cpus']}
+            command=[interpreter,'-u',str(script),*job.get('args',[])]
+            if plan['cpus']:command=[sys.executable,'-m','queue_runner.affinity_exec',*command]
+            process=subprocess.Popen(command,cwd=snapshot,
                 env=environment,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,bufsize=0,start_new_session=os.name=='posix')
             self.process=process
             def pump():

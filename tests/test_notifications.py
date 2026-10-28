@@ -15,6 +15,7 @@ def test_notification_is_authenticated_and_retained_in_private_inbox(tmp_path):
         assert notifications.send(url,'notify-token',packet)
         saved=json.loads((tmp_path/'latest.json').read_text())
         assert saved['event']=='allocation_acquired' and saved['worker_id']=='worker-1'
+        assert notifications.send(url,'notify-token',{**packet,'event':'service_ready','service_id':'llm'})
     finally:server.shutdown();server.server_close()
 
 

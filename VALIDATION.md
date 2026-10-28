@@ -30,3 +30,11 @@ Pending integration checks:
 - Real cloud checkpoint publication by this package. The storage protocol is tested locally; no publishing secret is embedded in the code.
 
 The private receiver is time-limited to 48 hours. Its tokens and inbox are outside this repository. No completed full-corpus geometry optimization or retrieval improvement is claimed.
+
+## Mixed workloads extension
+
+The new resident service remains disabled in workloads.json. The complete suite passes 27 tests on Linux; Windows passes 22 with five Linux-only tests skipped. Tests cover CPU/chip resource conflicts, actual Linux process affinity, residence across compatible jobs, termination before an exclusive job, optional launch failures and scheduler integration. Model execution is represented by a lightweight child process in these tests; no local TPU inference result is claimed. The full CLI smoke still completes two sequential jobs with two sealed checkpoints.
+
+The exact Linux CPython 3.12 inference dependency set resolved with CPU PyTorch: vllm-tpu 0.32.0, tpu-inference 0.32.0, JAX/JAXlib 0.11.2 and libtpu 0.0.48. All 240 selected packages and archive hashes are captured in environments/vllm-tpu-py312.lock. The CPU environment installed and passed actual DuckDB/Arrow statistics and a small CMA-ES smoke run.
+
+Kaggle NUMA/chip discovery, simultaneous four-chip serving, actual generation and private inference API delivery await hardware execution. No notebook version was submitted for this extension.

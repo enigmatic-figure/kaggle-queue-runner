@@ -29,7 +29,7 @@ def listen(root,token,host='127.0.0.1',port=8766,agent_id=None,agent_command=Non
                 if not 0<length<=32768:raise ValueError('Invalid body length')
                 value=json.loads(self.rfile.read(length))
                 if not isinstance(value,dict) or not re.fullmatch('[A-Za-z0-9_-]{1,120}',value.get('worker_id','')):raise ValueError('Invalid worker ID')
-                if value.get('event') not in ['allocation_acquired','ready','job_started','job_finished','runner_finished']:raise ValueError('Unknown event')
+                if value.get('event') not in ['allocation_acquired','ready','job_started','job_finished','runner_finished','service_ready','service_failed','service_stopped']:raise ValueError('Unknown event')
                 value['received_unix']=time.time()
                 with lock:
                     put(root/'latest.json',value)

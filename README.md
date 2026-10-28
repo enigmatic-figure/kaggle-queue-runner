@@ -30,7 +30,7 @@ The default workload is an 8,192-member real-coordinate geometry trial. It check
 }
 ```
 
-Jobs run sequentially. The branch is fetched again before selecting each job, and every 30 seconds while idle. Completed IDs are skipped within that run. Failed or interrupted jobs are not silently retried; give a deliberate retry a new ID. `on_failure` is `continue` or `stop`. `enabled: false` leaves a job disabled.
+Primary jobs run sequentially. An optional resident inference service can share explicitly reserved resources with compatible jobs. The branch is fetched again before selecting each job, and every 30 seconds while idle. Completed IDs are skipped within that run. Failed or interrupted jobs are not silently retried; give a deliberate retry a new ID. `on_failure` is `continue` or `stop`. `enabled: false` leaves a job disabled.
 
 Receipts belong to a run. This version does not implement distributed job leases or exactly-once execution across simultaneous workers. Before submitting a new allocation, remove/disable old jobs or deliberately restore the run directory with `--resume`. An interrupted receipt is retained rather than assumed complete. Checkpoint restoration is workload-specific.
 
@@ -70,6 +70,8 @@ Kaggle retains notebook run outputs and logs. For publication during execution, 
 Install the `hub` extra in the runner environment for this option. The publisher uploads only explicitly sealed checkpoint directories and selected redacted telemetry. It downloads and hashes each new checkpoint payload before publishing its ready marker. Networking credentials and Tailscale state live outside the Kaggle output directory. `artifact-sync.json` records publication errors; a finished job alone does not prove its cloud checkpoint was published.
 
 ## Optional private Tailscale connection
+
+For CPU analytics alongside a four-chip vLLM TPU service, see [Mixed workloads](docs/mixed-workloads.md). The package includes an isolated, hash-locked model environment, a pinned Qwen3-8B profile, and DuckDB/Arrow/CMA-ES CPU tooling. Inference is disabled by default. Jobs without explicit resource declarations keep exclusive access to all eight chips, including the current geometry trial. The stable Kaggle notebook is unchanged.
 
 The Linux amd64 worker can run a pinned Tailscale binary in userspace mode, with in-memory node state and a private daemon socket. It needs no TUN device. The binary archive is SHA256-verified. The auth key is passed through a temporary restricted file, then deleted. Use an ephemeral worker auth key with the access your tailnet permits.
 

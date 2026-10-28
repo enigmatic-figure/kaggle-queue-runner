@@ -37,10 +37,10 @@ def worker(args):
     put(root/'source.json',{'repository':args.repo,'branch':args.branch,'initial_commit':commit,'worker_id':run_id})
     network=None;server=None;publisher=None;publisher_thread=None;stop_sync=threading.Event();notification_threads=[]
     def notify(record):
-        if record['event'] not in ['allocation_acquired','ready','job_started','job_finished','runner_finished']:return
+        if record['event'] not in ['allocation_acquired','ready','job_started','job_finished','runner_finished','service_ready','service_failed','service_stopped']:return
         packet={'worker_id':run_id,'event':record['event'],
             'control_url':network.control_url if network else None,
-            **{k:record[k] for k in ['job_id','status'] if k in record}}
+            **{k:record[k] for k in ['job_id','status','service_id','private_api_url'] if k in record}}
         def deliver():
             error=None
             for delay in [0,2,5]:
@@ -87,10 +87,13 @@ def worker(args):
                             except Exception as error:put(root/'artifact-sync.json',{'ok':False,'error_type':type(error).__name__,'unix_time':time.time()})
                             return
                 publisher_thread=threading.Thread(target=sync_loop,daemon=True);publisher_thread.start()
+        from .services import Manager
+        r.services=Manager(root,network=network,secrets=private,event=r.event)
         r.event('ready',worker_id=run_id,private_control=bool(network))
         return run_queue(source,r,max_seconds=args.hours*3600,idle_seconds=args.idle_minutes*60,
                          poll_seconds=args.poll_seconds,secret_provider=get_secret)
     finally:
+        if r.services:r.services.close()
         stop_sync.set()
         if publisher_thread:publisher_thread.join(timeout=120)
         # Final callback gets a short opportunity to finish before disconnecting.
